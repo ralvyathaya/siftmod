@@ -1,94 +1,100 @@
-# Devvit Mod Tool Template
+# SiftMod
 
-A template for building Reddit moderation tools using Devvit web. This template provides a complete foundation for creating custom moderation tools with bulk comment management capabilities.
+SiftMod is a Reddit Devvit moderation app for triaging report abuse and report floods. It listens for post and comment report triggers, stores clustered incidents in Redis, masks abusive report text when configured, and gives moderators a short evidence packet from the post/comment overflow menu.
 
-## Features
+## MVP Features
 
-This template includes a working mod tool called **"Mop"** that demonstrates:
+- Listens to `onPostReport` and `onCommentReport` Devvit triggers.
+- Stores report incidents in Redis with a 60 day TTL.
+- Clusters by target thing ID, normalized report reason fingerprint, and configurable time window.
+- Detects high-severity incidents from configured abusive keyword/regex matches, repeated identical reports, and target-level report floods.
+- Masks abusive report text in moderator-facing summaries when masking is enabled.
+- Adds a moderator menu action on posts and comments: **View SiftMod report summary**.
+- Lets moderators mark the latest incident reviewed and save a short internal review note in Redis.
+- Can optionally send a modmail notification for high-severity incidents.
 
-- **Bulk Comment Management**: Remove or lock multiple comments at once
-- **Thread-level Actions**: "Mop comments" - Remove/lock a comment and all its replies
-- **Post-level Actions**: "Mop post comments" - Remove/lock all comments on a post
-- **Flexible Options**:
-  - Remove comments, lock comments, or both
-  - Skip distinguished comments (moderator/admin posts)
-- **Permission Checks**: Only moderators with proper permissions can use the tool
-- **User-friendly Forms**: Interactive forms with clear options and validation
+## Devvit APIs Used
 
-## Tech Stack
+This project uses the Devvit web server style from `@devvit/web/server`:
 
-- [Devvit](https://developers.reddit.com/): Reddit's platform for building and deploying apps
-- [Vite](https://vite.dev/): Fast build tool for the web components
-- [Hono](https://hono.dev/): Lightweight web framework for backend logic
-- [TypeScript](https://www.typescriptlang.org/): Type-safe development
+- `redis` for incident persistence and target indexes.
+- `settings` for subreddit install settings.
+- `reddit.modMail.createModNotification` for optional high-severity notifications.
+- Hono internal endpoints configured in `devvit.json`.
+- Trigger request types from `@devvit/web/shared`.
 
-## Getting Started
+The installed Devvit report trigger payloads expose `reason`, reported `post` or `comment`, and `subreddit` metadata. They do not expose reporter identity. SiftMod never claims to identify anonymous reporters.
 
-1. **Clone this template** or use it as a starting point for your mod tool
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-3. **Configure your app** in `devvit.json`:
-   - Update the app name
-   - Set your development subreddit
-4. **Start developing**:
-   ```bash
-   npm run dev
-   ```
-5. **Test your changes** in your development subreddit
+## Install Settings
+
+Configured in `devvit.json` under `settings.subreddit`:
+
+- `abusiveReportMasking`: mask matching abusive report text in summaries.
+- `keywordList`: newline or comma separated keyword/regex rules. Prefixes supported: `slur:`, `threat:`, `harassment:`, `doxxing:`, `keyword:`.
+- `floodThresholdCount`: report count that escalates an incident to high severity.
+- `floodWindowMinutes`: clustering and flood detection time window.
+- `notifyHighSeverity`: send modmail notification for high-severity incidents.
+
+Regex entries can use `/pattern/flags`, for example `threat:/\\bthreat phrase\\b/i`.
 
 ## Project Structure
 
-```
+```text
 src/
-├── index.ts          # Main server setup with Hono routes
-├── core/
-│   └── nuke.ts       # Core moderation logic for bulk operations
-└── routes/
-    ├── api.ts        # Public API endpoints
-    ├── forms.ts      # Form submission handlers
-    ├── menu.ts       # Context menu item handlers
-    └── triggers.ts   # App lifecycle triggers
+  index.ts                 Hono server setup
+  core/
+    incidents.ts           SiftMod settings, clustering, Redis, evidence packets
+  routes/
+    api.ts                 Reserved public API route
+    forms.ts               Mark reviewed and save internal notes
+    menu.ts                Moderator menu summary action
+    triggers.ts            App install, post report, comment report triggers
 ```
 
-## Customizing Your Mod Tool
+## Local Commands
 
-This template is designed to be easily customizable:
+```bash
+npm install
+npm run type-check
+npm run lint
+npm run build
+npm run dev
+```
 
-1. **Modify existing actions**: Edit the nuke functionality in `src/core/nuke.ts`
-2. **Add new menu items**: Update `devvit.json` and add handlers in `src/routes/menu.ts`
-3. **Create new forms**: Add form definitions and handlers in `src/routes/forms.ts`
-4. **Add API endpoints**: Extend `src/routes/api.ts` for external integrations
+`npm run dev` maps to `devvit playtest` and requires a logged-in Devvit CLI plus a configured development subreddit.
 
-## Commands
+## Demo Script
 
-- `npm run dev`: Starts development mode with live reload on your test subreddit
-- `npm run build`: Builds your mod tool for production
-- `npm run deploy`: Uploads a new version of your app to Reddit
-- `npm run launch`: Publishes your app for review and public use
-- `npm run login`: Authenticates your CLI with Reddit
-- `npm run type-check`: Runs TypeScript type checking, linting, and formatting
+1. Install or playtest SiftMod on a development subreddit.
+2. Open the app settings and confirm:
+   - Mask abusive report text: enabled.
+   - Flood threshold count: `3`.
+   - Flood time window minutes: `30`.
+3. Create a test post or comment.
+4. Submit repeated reports against that target with the same reason, or a reason that matches a configured keyword/regex.
+5. As a moderator, open the post/comment menu and select **View SiftMod report summary**.
+6. Show the evidence packet:
+   - severity
+   - report count for the identical-reason cluster
+   - report count for the target within the time window
+   - reason fingerprint
+   - matched categories
+   - masking status
+   - clustering method
+   - explicit limitation that reporter identity is not exposed
+7. Add a short internal note and submit the form to mark the incident reviewed.
+8. Reopen the summary to show reviewed status and the internal note.
 
-## How It Works
+## Limitations
 
-The template demonstrates Reddit mod tool development through the "Mop" feature:
+- Devvit report triggers in the installed package expose a `reason` string but no reporter identity.
+- SiftMod cannot prove coordinated abuse by specific users; it only clusters report metadata that Devvit exposes.
+- If Reddit does not expose exact custom report text in a future runtime or context, SiftMod degrades to available report reason/metadata.
+- Internal notes are stored in SiftMod Redis, not Reddit mod notes, because Reddit mod notes require a user target and anonymous reporter identity is not available.
+- The MVP summarizes the latest incident for a target from the menu action. A future version could add a full incident history view.
 
-1. **Context Menu Integration**: Click on the Mod Shield icon in a comment to see custom mod actions
-2. **Permission Validation**: Automatically checks if the user has moderation permissions
-3. **Interactive Forms**: Presents options through Reddit's native form system
-4. **Reddit API**: Processes multiple comments using Reddit's API
+## Hackathon Submission Draft
 
-## Development Notes
+**SiftMod** helps subreddit moderators triage report abuse without forcing them to repeatedly read abusive custom report text. It listens to Devvit post/comment report triggers, clusters repeated reports in Redis, detects high-severity report floods or abusive patterns with configurable keyword/regex rules, and generates a concise evidence packet from the post/comment moderator menu.
 
-- **Permissions**: The app requires `reddit: true` permission to access Reddit's API
-- **User Types**: Menu items are restricted to `moderator` user type
-
-## Deployment
-
-1. Test thoroughly in your development subreddit
-2. Run `npm run deploy` to upload your app
-3. Use `npm run launch` to submit for Reddit's app review process
-4. Once approved, users can install your mod tool from Reddit's app directory
-
-This template provides everything you need to build powerful, user-friendly moderation tools for Reddit communities.
+The app is intentionally explainable: every summary shows the clustering method, severity signals, report counts, masking status, and API limitations. SiftMod does not claim to identify anonymous reporters. It focuses on reducing moderator exposure, preserving incident context, and giving mod teams a fast review workflow during report floods.

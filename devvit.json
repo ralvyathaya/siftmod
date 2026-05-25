@@ -8,33 +8,71 @@
   "menu": {
     "items": [
       {
-        "label": "Mop comments",
-        "description": "Remove this comment and all child comments. This might take a few seconds to run.",
-        "location": "comment",
+        "label": "View SiftMod report summary",
+        "description": "Review clustered reports and an evidence packet for this item.",
+        "location": [
+          "post",
+          "comment"
+        ],
         "forUserType": "moderator",
-        "endpoint": "/internal/menu/mop-comment"
-      },
-      {
-        "label": "Mop post comments",
-        "description": "Remove all comments of this post. This might take a few seconds to run.",
-        "location": "post",
-        "forUserType": "moderator",
-        "endpoint": "/internal/menu/mop-post"
+        "endpoint": "/internal/menu/report-summary"
       }
     ]
   },
   "forms": {
-    "mopComment": "/internal/form/mop-comment-submit",
-    "mopPost": "/internal/form/mop-post-submit"
+    "reportIncidentSummary": "/internal/form/report-incident-summary-submit"
   },
   "triggers": {
-    "onAppInstall": "/internal/triggers/on-app-install"
+    "onAppInstall": "/internal/triggers/on-app-install",
+    "onPostReport": "/internal/triggers/on-post-report",
+    "onCommentReport": "/internal/triggers/on-comment-report"
+  },
+  "settings": {
+    "subreddit": {
+      "abusiveReportMasking": {
+        "type": "boolean",
+        "label": "Mask abusive report text",
+        "helpText": "When enabled, SiftMod masks report reasons that match configured abusive keyword or regex patterns.",
+        "defaultValue": true
+      },
+      "keywordList": {
+        "type": "paragraph",
+        "label": "Abusive report keyword/regex list",
+        "helpText": "One entry per line or comma. Optional prefixes: slur:, threat:, harassment:, doxxing:. Regex entries may use /pattern/flags.",
+        "defaultValue": "threat:kill yourself\nthreat:kys\nthreat:i will kill\nthreat:death threat\nharassment:harass\nharassment:stalk\nharassment:mass report\ndoxxing:dox\ndoxxing:doxx\ndoxxing:address\ndoxxing:phone number\ndoxxing:ip address\ndoxxing:swat"
+      },
+      "floodThresholdCount": {
+        "type": "number",
+        "label": "Flood threshold count",
+        "helpText": "Number of reports in the time window before SiftMod marks an incident high severity.",
+        "defaultValue": 3
+      },
+      "floodWindowMinutes": {
+        "type": "number",
+        "label": "Flood time window minutes",
+        "helpText": "Time window used for clustering repeated reports and target-level report floods.",
+        "defaultValue": 30
+      },
+      "notifyHighSeverity": {
+        "type": "boolean",
+        "label": "Send modmail notification for high severity",
+        "helpText": "When enabled, SiftMod sends a modmail notification for high severity incidents.",
+        "defaultValue": false
+      }
+    }
   },
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch"
   },
   "permissions": {
-    "reddit": true
+    "redis": true,
+    "reddit": {
+      "enable": true,
+      "scope": "moderator"
+    }
+  },
+  "dev": {
+    "subreddit": "siftmod_dev"
   }
 }
