@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import type { UiResponse } from '@devvit/web/shared';
-import { reviewIncident } from '../core/incidents';
+import { ignoreReportsForIncident, reviewIncident } from '../core/incidents';
 
 type ReportSummaryValues = {
+  ignoreReports?: boolean;
   incidentKey?: string;
   note?: string;
 };
@@ -22,16 +23,56 @@ forms.post('/report-incident-summary-submit', async (c) => {
   }
 
   const result = await reviewIncident(values.incidentKey, values.note);
+  if (!result.ok) {
+    return c.json<UiResponse>(
+      {
+        showToast: result.message,
+      },
+      200
+    );
+  }
+
+  if (values.ignoreReports) {
+    const actionResult = await ignoreReportsForIncident(values.incidentKey);
+
+    return c.json<UiResponse>(
+      {
+        showToast: actionResult.ok
+          ? {
+              text: 'SiftMod incident reviewed and reports ignored.',
+              appearance: 'success',
+            }
+          : `Incident reviewed, but ${actionResult.message}`,
+      },
+      200
+    );
+  }
 
   return c.json<UiResponse>(
     {
-      showToast: result.ok
-        ? {
-            text: 'SiftMod incident marked reviewed.',
-            appearance: 'success',
-          }
-        : result.message,
+      showToast: {
+        text: 'SiftMod incident marked reviewed.',
+        appearance: 'success',
+      },
     },
     200
   );
 });
+
+forms.post('/incident-queue-submit', (c) =>
+  c.json<UiResponse>(
+    {
+      showToast: 'SiftMod incident queue closed.',
+    },
+    200
+  )
+);
+
+forms.post('/diagnostics-submit', (c) =>
+  c.json<UiResponse>(
+    {
+      showToast: 'SiftMod diagnostics closed.',
+    },
+    200
+  )
+);
