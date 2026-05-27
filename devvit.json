@@ -16,11 +16,37 @@
         ],
         "forUserType": "moderator",
         "endpoint": "/internal/menu/report-summary"
+      },
+      {
+        "label": "Seed SiftMod demo incident",
+        "description": "Create a clearly labeled demo report incident for hackathon judging.",
+        "location": [
+          "post",
+          "comment"
+        ],
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/seed-demo-incident"
+      },
+      {
+        "label": "View SiftMod incident queue",
+        "description": "Review recent SiftMod incidents for this subreddit.",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/incident-queue"
+      },
+      {
+        "label": "Run SiftMod diagnostics",
+        "description": "Check SiftMod settings and Redis connectivity for this subreddit.",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/diagnostics"
       }
     ]
   },
   "forms": {
-    "reportIncidentSummary": "/internal/form/report-incident-summary-submit"
+    "reportIncidentSummary": "/internal/form/report-incident-summary-submit",
+    "incidentQueue": "/internal/form/incident-queue-submit",
+    "siftModDiagnostics": "/internal/form/diagnostics-submit"
   },
   "triggers": {
     "onAppInstall": "/internal/triggers/on-app-install",
@@ -39,6 +65,7 @@
         "type": "paragraph",
         "label": "Abusive report keyword/regex list",
         "helpText": "One entry per line or comma. Optional prefixes: slur:, threat:, harassment:, doxxing:. Regex entries may use /pattern/flags.",
+        "validationEndpoint": "/internal/settings/validate-keywords",
         "defaultValue": "threat:kill yourself\nthreat:kys\nthreat:i will kill\nthreat:death threat\nharassment:harass\nharassment:stalk\nharassment:mass report\ndoxxing:dox\ndoxxing:doxx\ndoxxing:address\ndoxxing:phone number\ndoxxing:ip address\ndoxxing:swat"
       },
       "floodThresholdCount": {
@@ -58,6 +85,12 @@
         "label": "Send modmail notification for high severity",
         "helpText": "When enabled, SiftMod sends a modmail notification for high severity incidents.",
         "defaultValue": false
+      },
+      "demoSeedEnabled": {
+        "type": "boolean",
+        "label": "Enable demo seed action",
+        "helpText": "When enabled, moderators can seed clearly labeled demo incidents from post/comment menus for hackathon demos.",
+        "defaultValue": true
       }
     }
   },
