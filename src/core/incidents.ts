@@ -827,7 +827,7 @@ const whyFlagged = (incident: ReportIncident) => {
   const reasons: string[] = [];
 
   if (incident.source === 'demo') {
-    reasons.push('Demo seed incident for the hackathon walkthrough.');
+    reasons.push('Seed incident for development and QA review.');
   }
 
   if (incident.reasonMasked) {
@@ -1015,7 +1015,7 @@ export async function createDiagnosticsPacket(subredditId?: string) {
     '',
     'Operational notes:',
     '- Mods usually cannot produce realistic self-report flows alone.',
-    '- Use Seed SiftMod demo incident on a post/comment for judge demos.',
+    '- Use Seed SiftMod demo incident on a post/comment for development testing.',
     '- Use a non-mod account for true end-to-end report trigger testing.',
     '- SiftMod never identifies anonymous reporters.',
   ].join('\n');

@@ -19,7 +19,7 @@
       },
       {
         "label": "Seed SiftMod demo incident",
-        "description": "Create a clearly labeled demo report incident for hackathon judging.",
+        "description": "Create a clearly labeled seed report incident for testing.",
         "location": [
           "post",
           "comment"
@@ -89,7 +89,7 @@
       "demoSeedEnabled": {
         "type": "boolean",
         "label": "Enable demo seed action",
-        "helpText": "When enabled, moderators can seed clearly labeled demo incidents from post/comment menus for hackathon demos.",
+        "helpText": "When enabled, moderators can seed clearly labeled test incidents from post/comment menus.",
         "defaultValue": true
       }
     }
